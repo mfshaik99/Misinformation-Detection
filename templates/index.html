@@ -1,34 +1,21 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Misinformation Detection</title>
-    <style>
-        body { font-family: Arial; margin: 50px; }
-        textarea { width: 400px; height: 100px; }
-        button { padding: 10px 20px; }
-        #result { margin-top: 20px; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <h1>AI-Powered Misinformation Detection</h1>
-    <textarea id="text"></textarea><br><br>
-    <button onclick="checkText()">Check</button>
-    <div id="result"></div>
+<div id="gemini_result"></div>
 
-    <script>
-        function checkText() {
-            let text = document.getElementById("text").value;
-            fetch("/check", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: "text=" + encodeURIComponent(text)
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById("result").innerHTML = 
+<script>
+    function checkText() {
+        let text = document.getElementById("text").value;
+        fetch("/check", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "text=" + encodeURIComponent(text)
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("result").innerHTML = 
                 `Result: ${data.label} (Confidence: ${data.score.toFixed(2)})`;
-            });
-        }
-    </script>
-</body>
-</html>
+            document.getElementById("gemini_result").innerHTML = 
+                `Gemini Verdict: ${data.gemini_verdict}<br>
+                 Sources: ${data.sources.join(", ")}<br>
+                 Explanation: ${data.explanation}`;
+        });
+    }
+</script>
