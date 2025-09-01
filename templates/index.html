@@ -1,21 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Misinformation Checker</title>
+    <title>AI-Powered Misinformation Checker</title>
 </head>
 <body>
     <h1>AI-Powered Misinformation Checker</h1>
-    <form method="POST">
-        <textarea name="text" rows="10" cols="80">{{ text }}</textarea><br>
-        <button type="submit">Verify</button>
+    <form method="post">
+        <textarea name="text" rows="10" cols="70" placeholder="Paste your text here...">{{ text }}</textarea><br><br>
+        <input type="submit" value="Verify">
     </form>
+
     {% if claims %}
-        <h2>Results:</h2>
-        <ul>
+    <h2>Results:</h2>
+    <table border="1" cellpadding="5">
+        <tr>
+            <th>Claim</th>
+            <th>Verdict</th>
+        </tr>
         {% for claim, verdict in zip(claims, verdicts) %}
-            <li><b>Claim:</b> {{ claim }}<br><b>Verdict:</b> {{ verdict }}</li>
+        <tr>
+            <td>{{ claim }}</td>
+            <td>{{ verdict }}</td>
+        </tr>
         {% endfor %}
-        </ul>
+    </table>
     {% endif %}
 </body>
 </html>
