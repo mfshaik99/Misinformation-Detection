@@ -1,21 +1,21 @@
-<div id="gemini_result"></div>
-
-<script>
-    function checkText() {
-        let text = document.getElementById("text").value;
-        fetch("/check", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: "text=" + encodeURIComponent(text)
-        })
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById("result").innerHTML = 
-                `Result: ${data.label} (Confidence: ${data.score.toFixed(2)})`;
-            document.getElementById("gemini_result").innerHTML = 
-                `Gemini Verdict: ${data.gemini_verdict}<br>
-                 Sources: ${data.sources.join(", ")}<br>
-                 Explanation: ${data.explanation}`;
-        });
-    }
-</script>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Misinformation Checker</title>
+</head>
+<body>
+    <h1>AI-Powered Misinformation Checker</h1>
+    <form method="POST">
+        <textarea name="text" rows="10" cols="80">{{ text }}</textarea><br>
+        <button type="submit">Verify</button>
+    </form>
+    {% if claims %}
+        <h2>Results:</h2>
+        <ul>
+        {% for claim, verdict in zip(claims, verdicts) %}
+            <li><b>Claim:</b> {{ claim }}<br><b>Verdict:</b> {{ verdict }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>
