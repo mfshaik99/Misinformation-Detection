@@ -1,38 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>AI-Powered Misinformation Checker</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f6f8;
-            color: #333;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #74ebd5, #ACB6E5);
             margin: 0;
             padding: 0;
+            color: #333;
         }
 
-        h1 {
+        header {
             background-color: #2c3e50;
-            color: #fff;
-            padding: 20px;
+            color: white;
+            padding: 25px 0;
             text-align: center;
-            margin: 0;
+            font-size: 2em;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
 
         form {
             max-width: 800px;
             margin: 30px auto;
             background-color: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 12px rgba(0,0,0,0.15);
         }
 
         textarea {
             width: 100%;
-            padding: 10px;
+            padding: 15px;
             font-size: 16px;
-            border-radius: 5px;
+            border-radius: 8px;
             border: 1px solid #ccc;
             resize: vertical;
         }
@@ -41,11 +43,12 @@
             background-color: #3498db;
             color: white;
             border: none;
-            padding: 12px 20px;
-            font-size: 16px;
-            border-radius: 5px;
+            padding: 12px 25px;
+            font-size: 18px;
+            border-radius: 8px;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 15px;
+            transition: 0.3s;
         }
 
         input[type="submit"]:hover {
@@ -54,16 +57,16 @@
 
         table {
             width: 90%;
-            margin: 20px auto;
+            margin: 30px auto;
             border-collapse: collapse;
-            background-color: #fff;
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 6px 10px rgba(0,0,0,0.1);
+            background-color: #fff;
         }
 
         th, td {
-            padding: 12px;
+            padding: 15px;
             text-align: left;
             border-bottom: 1px solid #ddd;
         }
@@ -74,32 +77,55 @@
         }
 
         tr:nth-child(even) {
-            background-color: #f9f9f9;
+            background-color: #f2f2f2;
         }
 
         tr:hover {
-            background-color: #f1f1f1;
+            background-color: #e0e7ff;
+        }
+
+        .Safe {
+            color: green;
+            font-weight: bold;
+        }
+
+        .Possibly\ False {
+            color: red;
+            font-weight: bold;
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 1.8em;
+        }
+
+        @media screen and (max-width: 600px) {
+            textarea, input[type="submit"], table {
+                width: 95%;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>AI-Powered Misinformation Checker</h1>
+    <header>AI-Powered Misinformation Checker</header>
+
     <form method="post">
-        <textarea name="text" rows="10" placeholder="Paste your text here...">{{ text }}</textarea><br><br>
-        <input type="submit" value="Verify">
+        <textarea name="text" rows="8" placeholder="Paste your text here...">{{ text }}</textarea><br>
+        <input type="submit" value="Check Text">
     </form>
 
-    {% if claims %}
-    <h2 style="text-align:center;">Results:</h2>
+    {% if results %}
+    <h2>Verification Results</h2>
     <table>
         <tr>
-            <th>Claim</th>
+            <th>Sentence</th>
             <th>Verdict</th>
         </tr>
-        {% for claim, verdict in zip(claims, verdicts) %}
+        {% for sentence, verdict in results %}
         <tr>
-            <td>{{ claim }}</td>
-            <td>{{ verdict }}</td>
+            <td>{{ sentence }}</td>
+            <td class="{{ verdict }}">{{ verdict }}</td>
         </tr>
         {% endfor %}
     </table>
