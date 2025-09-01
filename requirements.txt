@@ -1,4 +1,4 @@
-Flask
+gradio
 transformers
 torch
 spacy
