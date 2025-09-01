@@ -1,18 +1,17 @@
 from flask import Flask, render_template, request
 import wikipedia
 import nltk
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-import torch
+import requests
+import json
 
 # ----------------- Setup -----------------
 nltk.download('punkt')
 from nltk.tokenize import sent_tokenize
 
-# Load lightweight NLI model
-tokenizer = AutoTokenizer.from_pretrained("cross-encoder/nli-distilroberta-base")
-model = AutoModelForSequenceClassification.from_pretrained("cross-encoder/nli-distilroberta-base")
-device = torch.device("cpu")
-model.to(device)
+# Hugging Face Inference API
+HF_API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-mnli"
+HF_API_TOKEN = "YOUR_HUGGINGFACE_API_TOKEN"  # replace with your token
+headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
 
 # ----------------- Helper Functions -----------------
 def extract_claims(text):
@@ -33,16 +32,25 @@ def get_wiki_content(claim):
         return ""
 
 def verify_claim(claim, evidence):
-    """Verify claim using lightweight NLI model"""
+    """Verify claim using Hugging Face Inference API"""
     if not evidence:
         return "Not Enough Evidence"
-    inputs = tokenizer(claim, evidence, return_tensors="pt", truncation=True, max_length=512)
-    with torch.no_grad():
-        logits = model(**inputs).logits.to(device)
-        probs = torch.softmax(logits, dim=-1)[0]
-        label = torch.argmax(probs).item()
-        mapping = {0: "Refuted", 1: "Not Enough Evidence", 2: "Supported"}
-        return mapping[label]
+    payload = {
+        "inputs": {
+            "sequence": evidence,
+            "hypothesis": claim
+        }
+    }
+    try:
+        response = requests.post(HF_API_URL, headers=headers, json=payload, timeout=30)
+        output = response.json()
+        if isinstance(output, list) and "label" in output[0]:
+            label_map = {"CONTRADICTION": "Refuted", "NEUTRAL": "Not Enough Evidence", "ENTAILMENT": "Supported"}
+            return label_map.get(output[0]["label"], "Not Enough Evidence")
+        else:
+            return "Not Enough Evidence"
+    except:
+        return "Not Enough Evidence"
 
 # ----------------- Flask App -----------------
 app = Flask(__name__)
