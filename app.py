@@ -1,24 +1,14 @@
 from flask import Flask, render_template, request
 import wikipedia
-import spacy
 import nltk
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 
 # ----------------- Setup -----------------
-# Download NLTK tokenizer
 nltk.download('punkt')
 from nltk.tokenize import sent_tokenize
 
-# Load SpaCy model
-try:
-    nlp = spacy.load("en_core_web_sm")
-except OSError:
-    import subprocess
-    subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
-    nlp = spacy.load("en_core_web_sm")
-
-# Load lightweight NLI model for Render free tier
+# Load lightweight NLI model
 tokenizer = AutoTokenizer.from_pretrained("cross-encoder/nli-distilroberta-base")
 model = AutoModelForSequenceClassification.from_pretrained("cross-encoder/nli-distilroberta-base")
 device = torch.device("cpu")
@@ -31,13 +21,13 @@ def extract_claims(text):
     return [s for s in sents if len(s.split()) > 5][:10]
 
 def get_wiki_content(claim):
-    """Retrieve content from Wikipedia (first page, limited chars)"""
+    """Retrieve content from Wikipedia (first page, limited to 500 chars)"""
     try:
         titles = wikipedia.search(claim, results=1)
         content = ""
         for t in titles:
             page = wikipedia.page(t, auto_suggest=False)
-            content += page.content[:1000]  # only first 1000 chars to save memory
+            content += page.content[:500]  # short snippet to save memory
         return content
     except:
         return ""
@@ -72,5 +62,5 @@ def index():
 # ----------------- Run App -----------------
 if __name__ == "__main__":
     import os
-    port = int(os.environ.get("PORT", 5000))  # Use Render-assigned port
+    port = int(os.environ.get("PORT", 5000))  # Render-assigned port
     app.run(host="0.0.0.0", port=port)
