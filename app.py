@@ -1,4 +1,4 @@
-import gradio as gr
+from flask import Flask, render_template, request
 import wikipedia
 import spacy
 import nltk
@@ -18,9 +18,9 @@ except OSError:
     subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
     nlp = spacy.load("en_core_web_sm")
 
-# Load smaller NLI model to save memory
-tokenizer = AutoTokenizer.from_pretrained("valhalla/distilbart-mnli-12-1")
-model = AutoModelForSequenceClassification.from_pretrained("valhalla/distilbart-mnli-12-1")
+# Load lightweight NLI model for Render free tier
+tokenizer = AutoTokenizer.from_pretrained("cross-encoder/nli-distilroberta-base")
+model = AutoModelForSequenceClassification.from_pretrained("cross-encoder/nli-distilroberta-base")
 device = torch.device("cpu")
 model.to(device)
 
@@ -31,46 +31,46 @@ def extract_claims(text):
     return [s for s in sents if len(s.split()) > 5][:10]
 
 def get_wiki_content(claim):
-    """Retrieve content from Wikipedia"""
+    """Retrieve content from Wikipedia (first page, limited chars)"""
     try:
-        titles = wikipedia.search(claim, results=1)  # only 1 page to save memory
+        titles = wikipedia.search(claim, results=1)
         content = ""
         for t in titles:
             page = wikipedia.page(t, auto_suggest=False)
-            content += page.content
+            content += page.content[:1000]  # only first 1000 chars to save memory
         return content
     except:
         return ""
 
 def verify_claim(claim, evidence):
-    """Verify claim using NLI model"""
+    """Verify claim using lightweight NLI model"""
     if not evidence:
         return "Not Enough Evidence"
     inputs = tokenizer(claim, evidence, return_tensors="pt", truncation=True, max_length=512)
     with torch.no_grad():
-        logits = model(**inputs).logits
+        logits = model(**inputs).logits.to(device)
         probs = torch.softmax(logits, dim=-1)[0]
         label = torch.argmax(probs).item()
         mapping = {0: "Refuted", 1: "Not Enough Evidence", 2: "Supported"}
         return mapping[label]
 
-def analyze_text(text):
-    """Main function for Gradio interface"""
-    claims = extract_claims(text)
-    verdicts = []
-    for c in claims:
-        evidence = get_wiki_content(c)
-        verdicts.append(verify_claim(c, evidence))
-    return dict(zip(claims, verdicts))
+# ----------------- Flask App -----------------
+app = Flask(__name__)
 
-# ----------------- Gradio Interface -----------------
-iface = gr.Interface(
-    fn=analyze_text,
-    inputs=gr.Textbox(lines=10, placeholder="Paste text here..."),
-    outputs=gr.Label(num_top_classes=10),
-    title="AI-Powered Misinformation Checker",
-    description="Paste text to extract claims and verify them using AI and Wikipedia."
-)
+@app.route("/", methods=["GET", "POST"])
+def index():
+    claims, verdicts, text = [], [], ""
+    if request.method == "POST":
+        text = request.form.get("text")
+        if text:
+            claims = extract_claims(text)
+            for c in claims:
+                evidence = get_wiki_content(c)
+                verdicts.append(verify_claim(c, evidence))
+    return render_template("index.html", claims=claims, verdicts=verdicts, text=text)
 
-# Launch the interface
-iface.launch()
+# ----------------- Run App -----------------
+if __name__ == "__main__":
+    import os
+    port = int(os.environ.get("PORT", 5000))  # Use Render-assigned port
+    app.run(host="0.0.0.0", port=port)
