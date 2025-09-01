@@ -1,6 +1,6 @@
-gradio
-transformers
+Flask==3.1.2
 torch
+transformers
 spacy
 nltk
 wikipedia
